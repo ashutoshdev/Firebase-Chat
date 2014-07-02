@@ -9,8 +9,9 @@
         <div id="chatlist">
             <!-- ko foreach: userslist -->
             <div class="ls-item">
-                <img data-bind="attr:{'src':img}" />
+                <img data-bind="attr:{'src':img}" style="height: 40px; width: 40px;" />
                 <p data-bind="text:name"></p>
+                <span data-bind="visible:$root.isAlive($data) ">Online</span>
             </div>
             <!-- /ko -->
             
@@ -43,8 +44,10 @@
                  "img" => "data:image/jpeg;base64,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"
              ),
          );
-         $me = $list[rand(1, 4)];
+         $me = $list[rand(0, 3)];
         ?>
+        <h1><?php echo $me['id']; ?></h1>
+        <h1><?php echo $me['name']; ?></h1>
         <script type="text/javascript">
             var user = {
                 id:<?php echo $me['id']; ?>,
@@ -54,16 +57,56 @@
             // 
             var ChatViewModel = function(user){
                 var me = this;
-                me.fbaseUsr = null;
+                me.fbaseUsrlist = null;
+                me.fbaseCurrentUsr = null;
                 me.userslist = ko.observableArray([]);
+                me.isAlive = function(d){
+                    if(d.time){
+                        var now = new Date();
+                        var dt = new Date(d.time);
+                        if((now - dt) < 1000 * 30)
+                            return true;
+                    }
+                    return false;
+                }
                 me.openChatBox = function(){
                     
                 }
+                me.timer = null
+                me.startTimer = function(){
+                  var c = new Date();
+                  try{clearInterval(me.timer)}catch(e){}
+                  me.timer = setInterval(function(){
+                        me.fbaseCurrentUsr.update({time:c.toISOString()});  
+                    },1000);
+                };
                 me._setup = function(u){
-                    me.fbaseUsr = new Firebase("https://boiling-fire-4249.firebaseio.com/");
-                    me.fbaseUsr.on("value",function(snap){
+                    me.fbaseUsrlist = new Firebase("https://boiling-fire-4249.firebaseio.com/userlist/");
+                    me.fbaseUsrlist.on("value",function(snap){
                         var data = snap.val();
                         console.log(data);
+                        if(data == null ){
+                            me.fbaseCurrentUsr = me.fbaseUsrlist.push(u);
+                            me.startTimer();
+                        }else{
+                            var flag = true;
+                            for(i in data){
+                                if(data[i].id == u.id){
+                                    flag = false;
+                                    me.fbaseCurrentUsr = new Firebase("https://boiling-fire-4249.firebaseio.com/userlist/"+i);
+                                    me.startTimer();
+                                }
+                            }
+                            if(flag){
+                                me.fbaseCurrentUsr = me.fbaseUsrlist.push(u);
+                                me.startTimer();
+                            }
+                        }
+                        var dlist =  [];
+                        for(i in data){
+                            dlist.push(data[i]);
+                        }
+                        me.userslist(dlist);
                     });
                 }
                 me._setup(user);
@@ -81,5 +124,12 @@
             });
             
         </script>
+        <style type="text/css">
+            .ls-item {
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                margin: 4px;
+            }
+        </style>
     </body>
 </html>
