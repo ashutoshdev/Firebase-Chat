@@ -6,18 +6,24 @@
         <script type="text/javascript" src="https://cdn.firebase.com/js/client/1.0.15/firebase.js"></script>
     </head>
     <body>
-        <div id="chatlist">
+        <div id="chatlist" class="hm-chatlist">
             <!-- ko foreach: userslist -->
-            <div class="ls-item">
+            <div class="ls-item" data-bind="click:$root.openChatBox">
                 <img data-bind="attr:{'src':img}" style="height: 40px; width: 40px;" />
-                <p data-bind="text:name"></p>
-                <span data-bind="visible:$root.isAlive($data) ">Online</span>
+                <div class="hm-lsitem">
+                    <table width="100%">
+                        <tr>
+                            <td width="98%" data-bind="text:name"></td>
+                            <td width="2%">
+                                <div style=" float: right; width:10px; height: 10px; background: green; border-radius:5px;" data-bind="visible:$root.isAlive($data)"></div>
+                            </td>
+                        </tr>
+                    </table>
+                    <p></p>
+                </div>
             </div>
             <!-- /ko -->
-            
-            
-            
-        </div>
+       </div>
         
         
         
@@ -69,8 +75,9 @@
                     }
                     return false;
                 }
-                me.openChatBox = function(){
-                    
+                me.openChatBox = function(d,e){
+                    console.log(d);
+                    console.log(e);
                 }
                 me.timer = null
                 me.startTimer = function(){
@@ -84,7 +91,7 @@
                     me.fbaseUsrlist = new Firebase("https://boiling-fire-4249.firebaseio.com/userlist/");
                     me.fbaseUsrlist.on("value",function(snap){
                         var data = snap.val();
-                        console.log(data);
+                        //console.log(data);
                         if(data == null ){
                             me.fbaseCurrentUsr = me.fbaseUsrlist.push(u);
                             me.startTimer();
@@ -125,10 +132,34 @@
             
         </script>
         <style type="text/css">
+            .hm-chatlist{
+                font-family: Arial, Tahoma;
+                font-size: 10px;
+                width: 280px;
+                position: fixed;
+                right: 0;
+                bottom: 0;
+                height: 400px;
+                overflow: auto;
+                border: 1px solid;
+            }
             .ls-item {
                 border: 1px solid #ccc;
                 border-radius: 4px;
                 margin: 4px;
+                height: 40px;
+            }
+            .ls-item img {
+                display: inline-block;
+                width: 40px;
+            }
+            .ls-item:hover{
+                cursor: pointer;
+                background: oldlace;
+            }
+            .ls-item .hm-lsitem{
+                display: inline-block;
+                width: 200px;
             }
         </style>
     </body>
