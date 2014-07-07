@@ -6,8 +6,12 @@
         <script type="text/javascript" src="https://cdn.firebase.com/js/client/1.0.15/firebase.js"></script>
     </head>
     <body>
+        <div class="chat-container">
+            <span id="afterme"></span>
+        
         <div id="chatlist" class="hm-chatlist">
             <!-- ko foreach: userslist -->
+            <!-- ko if: id != $root.id() -->
             <div class="ls-item" data-bind="click:$root.openChatBox">
                 <img data-bind="attr:{'src':img}" style="height: 40px; width: 40px;" />
                 <div class="hm-lsitem">
@@ -23,8 +27,44 @@
                 </div>
             </div>
             <!-- /ko -->
+            <!-- /ko -->
        </div>
-        
+       </div>
+        <script type="text/html" id="chatbox-tmpl">
+            <div class="chat-head"><b data-bind="text:username"></b><span class="close-me" data-bind="click:closeMe">X</span></div>
+            <div class="ch-msglist" data-bind="foreach:msgList">
+                <!-- ko if: id != $root.id() -->
+                <div class="cm-msg rbx">
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td>
+                                <img data-bind="attr:{'src':pic}" style="height: 40px; width: 40px;" />
+                            </td>
+                            <td>
+                                <div data-bind="text:msg"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <!-- /ko -->
+                <!-- ko if: id == $root.id() -->
+                <div class="cm-msg lbx">
+                    <table cellpadding="0" cellspacing="0"  width="100%">
+                        <tr>
+                            <td>
+                                <div data-bind="text:msg"></div>
+                            </td>
+                            <td>
+                                <img data-bind="attr:{'src':pic}" style="height: 40px; width: 40px;" />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <!-- /ko -->    
+            </div>
+            <textarea class="ch-textbx" data-bind="event:{'keyup':sendMsg} "></textarea>
+                   
+        </script>
         
         
         <?php
@@ -61,10 +101,13 @@
                 img: "<?php echo $me['img']; ?>"
             }
             // 
+            var chatBoxs = [];
             var ChatViewModel = function(user){
                 var me = this;
+                me.id = ko.observable(user.id);
                 me.fbaseUsrlist = null;
                 me.fbaseCurrentUsr = null;
+                me.fbasemsgList = null;
                 me.userslist = ko.observableArray([]);
                 me.isAlive = function(d){
                     if(d.time){
@@ -76,8 +119,33 @@
                     return false;
                 }
                 me.openChatBox = function(d,e){
-                    console.log(d);
-                    console.log(e);
+                    var tmpl = $('#chatbox-tmpl').html();
+                    var box_id = "ch-box-"+d.id;
+                    $('#afterme').after('<div id="'+box_id+'" class="hm-chatlist">'+tmpl+'</div>')
+                    var flag = true;
+                    var k = null;
+                    for(i in chatBoxs){
+                        if(chatBoxs[i].key == box_id){
+                            flag= false;
+                            k = i;
+                        }
+                    }
+                    if(flag){
+                        var box = new ChatBoxViewModel(d,user);
+                        chatBoxs.push({
+                            key: box_id.toString(),
+                            box: box
+                        });
+                        ko.applyBindings(box,$('#'+box_id)[0]);
+                    }else{
+                        var box = new ChatBoxViewModel(d,user);
+                        chatBoxs[k] = {
+                            key: box_id.toString(),
+                            box: box
+                        };
+                        ko.applyBindings(box,$('#'+box_id)[0]);
+                    }
+                    
                 }
                 me.timer = null
                 me.startTimer = function(){
@@ -115,15 +183,67 @@
                         }
                         me.userslist(dlist);
                     });
+                    me.fbasemsgList = new Firebase("https://boiling-fire-4249.firebaseio.com/chatboxs/");
+                    me.fbasemsgList.on("value",function(v){
+                        var data = v.val();
+                        console.log(data);
+                    });
                 }
                 me._setup(user);
             } 
-            var ChatBoxViewModel = function(){
+            var ChatBoxViewModel = function(d,cUsr){
                 var me = this;
+                me.key = ko.observable();
+                me.username = ko.observable(d.name)
+                me.id = ko.observable(d.id);
+                me.cUsr = null;
+                me.fbasemsgList = null;
+                me.msgList = ko.observableArray([]);
                 me.msg = ko.observable("");
-                me.sendMsg = function(){
-                    
+                me.closeMe = function(){
+                    $('#ch-box-'+me.id()).remove();
+                    delete me;
+                }
+                me.sendMsg = function(d,e){
+                    //e.msg(e.currentTarget.value)
+                    me.msg(e.currentTarget.value);
+                    if(e.keyCode == 13){
+                        me.fbasemsgList.push({
+                            msg: me.msg(),
+                            id: me.cUsr.id,
+                            to: me.id(),
+                            pic: me.cUsr.img,
+                            seen: 0
+                        });
+                        me.msg("");
+                        e.currentTarget.value = "";
+                    }
                 };
+                me.genrateKey = function(a,b){
+                    if(a>b){
+                        return b.toString() +"-"+ a.toString();
+                    }
+                    return a.toString() +"-"+ b.toString();
+                }
+                me._setup = function(){
+                    me.cUsr = cUsr;
+                    me.key(me.genrateKey(d.id,cUsr.id));
+                    me.fbasemsgList = new Firebase("https://boiling-fire-4249.firebaseio.com/chatboxs/"+me.key());
+                    me.fbasemsgList.on("value",function(v){
+                        var d = v.val();
+                        var list = [];
+                        for(i in d){
+                            list.push(d[i]);
+                            if(d[i].id != me.cUsr.id && me.genrateKey(d[i].id,me.cUsr.id) == me.key()){
+                                var x = new Firebase("https://boiling-fire-4249.firebaseio.com/chatboxs/"+me.key()+"/" +i+"/");
+                                x.update({seen:1});
+                            }
+                        }
+                        me.msgList(list);
+                    });
+                }
+                me._setup();
+                
             }
             var clist = new ChatViewModel(user);
             $(document).ready(function(){
@@ -132,16 +252,39 @@
             
         </script>
         <style type="text/css">
+            .chat-container {
+                position: fixed;
+                right: 0;
+                bottom: 0;
+            }
             .hm-chatlist{
                 font-family: Arial, Tahoma;
                 font-size: 10px;
                 width: 280px;
-                position: fixed;
-                right: 0;
-                bottom: 0;
                 height: 400px;
                 overflow: auto;
                 border: 1px solid;
+                display: inline-block;
+                vertical-align: bottom;
+            }
+            .chat-head{
+                background: #000;
+                color:#fff;
+                font-weight: bold;
+                font-size: 12pt;
+            }
+            .chat-head span{
+                float: right;
+                cursor: pointer;
+            }
+            .ch-textbx {
+                width: 100%;
+                padding: 4px;
+                border: 0;
+            }
+            .ch-msglist{
+                height: 321px;
+                background: #eee;
             }
             .ls-item {
                 border: 1px solid #ccc;
